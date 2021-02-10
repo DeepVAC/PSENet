@@ -83,8 +83,8 @@ namespace lanms {
             inline std::int64_t sqr(std::int64_t x) { return x * x; }
 
             Polygon normalize_poly(
-                    const Polygon &ref,
-                    const Polygon &p) {
+                const Polygon &ref,
+                const Polygon &p) {
 
                 std::int64_t min_d = std::numeric_limits<std::int64_t>::max();
                 size_t best_start = 0, best_order = 0;
@@ -92,15 +92,15 @@ namespace lanms {
                 for (size_t start = 0; start < 4; start ++) {
                     size_t j = start;
                     std::int64_t d = (
-                            sqr(ref.poly[(j + 0) % 4].X - p.poly[(j + 0) % 4].X)
-                            + sqr(ref.poly[(j + 0) % 4].Y - p.poly[(j + 0) % 4].Y)
-                            + sqr(ref.poly[(j + 1) % 4].X - p.poly[(j + 1) % 4].X)
-                            + sqr(ref.poly[(j + 1) % 4].Y - p.poly[(j + 1) % 4].Y)
-                            + sqr(ref.poly[(j + 2) % 4].X - p.poly[(j + 2) % 4].X)
-                            + sqr(ref.poly[(j + 2) % 4].Y - p.poly[(j + 2) % 4].Y)
-                            + sqr(ref.poly[(j + 3) % 4].X - p.poly[(j + 3) % 4].X)
-                            + sqr(ref.poly[(j + 3) % 4].Y - p.poly[(j + 3) % 4].Y)
-                            );
+                        sqr(ref.poly[(j + 0) % 4].X - p.poly[(j + 0) % 4].X)
+                        + sqr(ref.poly[(j + 0) % 4].Y - p.poly[(j + 0) % 4].Y)
+                        + sqr(ref.poly[(j + 1) % 4].X - p.poly[(j + 1) % 4].X)
+                        + sqr(ref.poly[(j + 1) % 4].Y - p.poly[(j + 1) % 4].Y)
+                        + sqr(ref.poly[(j + 2) % 4].X - p.poly[(j + 2) % 4].X)
+                        + sqr(ref.poly[(j + 2) % 4].Y - p.poly[(j + 2) % 4].Y)
+                        + sqr(ref.poly[(j + 3) % 4].X - p.poly[(j + 3) % 4].X)
+                        + sqr(ref.poly[(j + 3) % 4].Y - p.poly[(j + 3) % 4].Y)
+                    );
                     if (d < min_d) {
                         min_d = d;
                         best_start = start;
@@ -108,15 +108,15 @@ namespace lanms {
                     }
 
                     d = (
-                            sqr(ref.poly[(j + 0) % 4].X - p.poly[(j + 3) % 4].X)
-                            + sqr(ref.poly[(j + 0) % 4].Y - p.poly[(j + 3) % 4].Y)
-                            + sqr(ref.poly[(j + 1) % 4].X - p.poly[(j + 2) % 4].X)
-                            + sqr(ref.poly[(j + 1) % 4].Y - p.poly[(j + 2) % 4].Y)
-                            + sqr(ref.poly[(j + 2) % 4].X - p.poly[(j + 1) % 4].X)
-                            + sqr(ref.poly[(j + 2) % 4].Y - p.poly[(j + 1) % 4].Y)
-                            + sqr(ref.poly[(j + 3) % 4].X - p.poly[(j + 0) % 4].X)
-                            + sqr(ref.poly[(j + 3) % 4].Y - p.poly[(j + 0) % 4].Y)
-                        );
+                        sqr(ref.poly[(j + 0) % 4].X - p.poly[(j + 3) % 4].X)
+                        + sqr(ref.poly[(j + 0) % 4].Y - p.poly[(j + 3) % 4].Y)
+                        + sqr(ref.poly[(j + 1) % 4].X - p.poly[(j + 2) % 4].X)
+                        + sqr(ref.poly[(j + 1) % 4].Y - p.poly[(j + 2) % 4].Y)
+                        + sqr(ref.poly[(j + 2) % 4].X - p.poly[(j + 1) % 4].X)
+                        + sqr(ref.poly[(j + 2) % 4].Y - p.poly[(j + 1) % 4].Y)
+                        + sqr(ref.poly[(j + 3) % 4].X - p.poly[(j + 0) % 4].X)
+                        + sqr(ref.poly[(j + 3) % 4].Y - p.poly[(j + 0) % 4].Y)
+                    );
                     if (d < min_d) {
                         min_d = d;
                         best_start = start;
