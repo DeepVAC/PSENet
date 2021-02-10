@@ -5,7 +5,7 @@ import torch.utils.data as data
 from torch.utils.data import DataLoader
 
 from modules.cpp import pse
-from modules.model_mv3fpn import mobilenetv3
+from modules.model_mv3fpn import FpnMobileNetv3
 from modules.utils import preprocess
 import time
 import cv2
@@ -32,7 +32,7 @@ class DeepvacPseTest(Deepvac):
         self.initTestLoader()
 
     def initNetWithCode(self):
-        self.net = mobilenetv3(kernel_num=self.conf.test.kernel_num)
+        self.net = FpnMobileNetv3(kernel_num=self.conf.test.kernel_num)
         self.net.to(self.device)
 
     def report(self):

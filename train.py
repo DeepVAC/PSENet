@@ -5,7 +5,7 @@ import torch.utils.data as data
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 
-from modules.model_mv3fpn import mobilenetv3
+from modules.model_mv3fpn import FpnMobileNetv3
 from modules.utils import preprocess, dice_loss, ohem_batch, cal_text_score
 from modules.utils_metrics import runningScore
 from aug.aug import PseTrainDataset
@@ -20,7 +20,7 @@ class DeepvacPse(DeepvacTrain):
         super(DeepvacPse,self).__init__(deepvac_config)
 
     def initNetWithCode(self):
-        self.net = mobilenetv3(kernel_num=self.conf.train.kernel_num)
+        self.net = FpnMobileNetv3(kernel_num=self.conf.train.kernel_num)
         self.net.to(self.device)
 
     def initOptimizer(self):

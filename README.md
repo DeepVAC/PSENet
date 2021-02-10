@@ -25,16 +25,21 @@ DeepVAC-compliant PSENet implementation.
 
 ## 3. 准备数据集
 - 获取文本检测数据集
-  CTW1500格式的数据集
+  CTW1500格式的数据集,CTW1500下载地址:
+  [ch4_training_images.zip](https://rrc.cvc.uab.es/downloads/ch4_training_images.zip)
+  [ch4_training_localization_transcription_gt.zip](https://rrc.cvc.uab.es/downloads/ch4_training_localization_transcription_gt.zip)
+  [ch4_test_images.zip](https://rrc.cvc.uab.es/downloads/ch4_test_images.zip)
+  [Challenge4_Test_Task1_GT.zip](https://rrc.cvc.uab.es/downloads/Challenge4_Test_Task1_GT.zip)
+
 
 - 数据集配置
   在config.py文件中作如下配置：
 
 ``` python
-config.train.data_dir = 'ctw_root_dir/train/text_image/'
-config.train.gt_dir = 'ctw_root_dir/train/text_label_curve/'
-config.val.data_dir = 'ctw_root_dir/test/text_image/'
-config.val.gt_dir = 'ctw_root_dir/test/text_label_curve/'
+config.train.data_dir = <your train image path>
+config.train.gt_dir = <your train gt path>
+config.val.data_dir = <your val image path>
+config.val.gt_dir = <your val gt path>
 ```
 
 ## 4. 训练相关配置
