@@ -26,9 +26,13 @@ DeepVAC-compliant PSENet implementation.
 ## 3. 准备数据集
 - 获取文本检测数据集
   CTW1500格式的数据集,CTW1500下载地址:
+
   [ch4_training_images.zip](https://rrc.cvc.uab.es/downloads/ch4_training_images.zip)
+
   [ch4_training_localization_transcription_gt.zip](https://rrc.cvc.uab.es/downloads/ch4_training_localization_transcription_gt.zip)
+
   [ch4_test_images.zip](https://rrc.cvc.uab.es/downloads/ch4_test_images.zip)
+
   [Challenge4_Test_Task1_GT.zip](https://rrc.cvc.uab.es/downloads/Challenge4_Test_Task1_GT.zip)
 
 
