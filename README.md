@@ -6,7 +6,7 @@ DeepVAC-compliant PSENet implementation.
 
 **项目依赖**
 
-- deepvac >= 0.3.1
+- deepvac >= 0.5.6
 - pytorch >= 1.8.0
 - torchvision >= 0.7.0
 - opencv-python
@@ -40,56 +40,45 @@ DeepVAC-compliant PSENet implementation.
   在config.py文件中作如下配置：
 
 ``` python
-config.train.data_dir = <your train image path>
-config.train.gt_dir = <your train gt path>
-config.val.data_dir = <your val image path>
-config.val.gt_dir = <your val gt path>
+# line 47-48, config for train dataset
+sample_path = <your train image path>
+label_path = <your train gt path>
+# line 66-67, config for val dataset
+sample_path = <your val image path>
+label_path = <your val gt path>
 ```
 
 ## 4. 训练相关配置
 
-- dataloader相关配置(config.train, config.val)
+- dataloader相关配置
 
 ```python
-config.train.batch_size = 12
-config.train.shuffle = True
-config.train.img_size = 640
-config.train.is_transform = True    # 是否动态数据增强
-config.train.kernel_num = 7         # PSE kernel数量
-config.train.min_scale = 0.4        # 最小kernel的缩放倍数
-config.train.arch = 'mv3'           # 网络backbone,目前只支持mv3
+is_transform = True                 # 是否动态数据增强
+img_size = 640                      # 输入图片大小(img_size, img_size)
+config.datasets.PseTrainDataset = AttrDict()
+config.datasets.PseTrainDataset.kernel_num = 7
+config.datasets.PseTrainDataset.min_scale = 0.4
+config.core.train_dataset = PseTrainDataset(config, sample_path, label_path, is_transform, img_size)
+config.core.train_loader = torch.utils.data.DataLoader(
+    dataset = config.core.train_dataset,
+    batch_size = 12,
+    shuffle = True,
+    num_workers = 4,
+    pin_memory = True,
+    sampler = None
+)
 ```
 
 ## 5. 训练
 
-### 5.1 单卡训练
-
 ```bash
 python3 train.py
 ```
-
-### 5.2 分布式训练
-
-在config.py中修改如下配置：
-```python
-#dist_url，单机多卡无需改动，多机训练一定要修改
-config.dist_url = "tcp://localhost:27030"
-
-#rank的数量，一定要修改
-config.world_size = 2
-```
-然后执行命令：
-
-```bash
-python train.py --rank 0 --gpu 0
-python train.py --rank 1 --gpu 1
-```
-
 ## 6. 测试
 
 - 编译PSE
 
-```python
+```bash
 cd modules/cpp
 make
 ```
@@ -97,24 +86,23 @@ make
 - 测试相关配置
 
 ```python
-config.test.fileline_data_path_prefix = <test-data-path>
-config.test.fileline_path = <image-name-to-coordinate-maps>
-config.test.batch_size = 1
-config.test.shuffle = False
-config.test.arch = 'mv3'
-config.test.long_size = 1280                        # 输入图片最大边长
-config.test.kernel_num = 7                          # PSE kernel数量
-config.test.min_kernel_area = 10.0                  # 文本域最小kernel的最低像素数
-config.test.min_area = 300.0                        # 文本域名的最低像素数
-config.test.min_score = 0.93                        # 判断是文本的最低置信度
-config.test.binary_th = 1.0
-config.test.scale = 1
-```
+config.core.model_path = <trained-model-path>
+config.core.kernel_num = 7
+config.core.min_kernel_area = 10.0
+config.core.min_area = 300.0
+config.core.min_score = 0.93
+config.core.binary_th = 1.0
+config.core.scale = 1
 
-- 加载模型(*.pth)
-
-```python
-config.model_path = '<trained-model-path>'
+sample_path = <your test images path>
+config.core.test_dataset = PseTestDataset(config, sample_path, long_size=1280)
+config.core.test_loader = torch.utils.data.DataLoader(
+    dataset = config.core.test_dataset,
+    batch_size = 1,
+    shuffle = False,
+    num_workers = 0,
+    pin_memory = True
+)
 ```
 
 - 运行测试脚本：
@@ -125,42 +113,21 @@ python3 test.py
 
 ## 7. 使用torchscript模型
 
-如果训练过程中未开启config.script_model_path开关，可以在测试过程中转化torchscript模型
+如果训练过程中未开启config.cast.script_model_dir开关，可以在测试过程中转化torchscript模型
 - 转换torchscript模型(*.pt)
 
 ```python
-config.script_model_path = "output/script.pt"
+config.cast.script_model_path = "output/script.pt"
 ```
-  按照步骤6完成测试，torchscript模型将保存至config.script_model_path指定文件位置
-
-warining: 当前导出torchscript还有问题
-```python3
-RuntimeError:
-Expected a default value of type Tensor (inferred) on parameter "scale".Because "scale" was not annotated with an explicit type it is assumed to be type 'Tensor'.:
-```
+按照步骤6完成测试，torchscript模型将保存至config.cast.script_model_dir指定文件位置
 
 - 加载torchscript模型
 
 ```python
-config.jit_model_path = <torchscript-model-path>
+config.core.jit_model_path = <torchscript-model-path>
 ```
 
-## 8. 使用静态量化模型
-如果训练过程中未开启config.static_quantize_dir开关，可以在测试过程中转化静态量化模型
-- 转换静态模型(*.sq)
-
-```python
-config.static_quantize_dir = "output/script.sq"
-```
-  按照步骤6完成测试，静态量化模型将保存至config.static_quantize_dir指定文件位置
-
-- 加载静态量化模型
-
-```python
-config.jit_model_path = <static-quantize-model-path>
-```
-
-## 9. 更多功能
+## 更多功能
 如果要在本项目中开启如下功能：
 - 预训练模型加载
 - checkpoint加载
@@ -176,6 +143,3 @@ config.jit_model_path = <static-quantize-model-path>
 
 请参考[DeepVAC](https://github.com/DeepVAC/deepvac)
 
-## 10. TODO
-
-- 增加模型导出torchscript
