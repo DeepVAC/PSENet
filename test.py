@@ -1,5 +1,3 @@
-import sys
-sys.path.extend(["/opt/public/airlock/lihang/pyclipper/", "/opt/public/airlock/lihang/Polygon3/", "/opt/public/airlock/lihang/deepvac/"])
 from deepvac import Deepvac, LOG
 from modules.cpp import pse
 import torch

@@ -26,9 +26,7 @@ config.core.save_num = 1
 #config.core.tensorboard_ip = None
 
 ## -------------------- script and quantize ------------------
-config.cast.script_model_dir = "./output/script.pt"
-config.cast.static_quantize_dir = "./output/script.sq"
-#config.cast.dynamic_quantize_dir = "./quantize.sq"
+#config.cast.script_model_dir = "./output/script.pt"
 
 ## -------------------- net and criterion ------------------
 config.core.net = FpnMobileNetv3(kernel_num=7)
@@ -41,10 +39,8 @@ lambda_lr = lambda epoch: round ((1 - epoch/config.core.epoch_num) ** 0.9, 8)
 config.core.scheduler = optim.lr_scheduler.LambdaLR(config.core.optimizer, lr_lambda=lambda_lr)
 
 ## -------------------- loader ------------------
-#sample_path = 'your train image dir'
-#label_path = 'your train labels dir'
-sample_path = '/gemfield/hostpv2/lihang/ocr_detect_minidata/minitrain_images/'
-label_path = '/gemfield/hostpv2/lihang/ocr_detect_minidata/minitrain_gt/'
+sample_path = 'your train image dir'
+label_path = 'your train labels dir'
 is_transform = True
 img_size = 640
 config.datasets.PseTrainDataset = AttrDict()
@@ -61,10 +57,8 @@ config.core.train_loader = torch.utils.data.DataLoader(
 )
 
 ## -------------------- val ------------------
-#sample_path = 'your val image dir'
-#label_path = 'your val labels dir'
-sample_path = '/gemfield/hostpv2/lihang/ocr_detect_minidata/minitrain_images/'
-label_path = '/gemfield/hostpv2/lihang/ocr_detect_minidata/minitrain_gt/'
+sample_path = 'your val image dir'
+label_path = 'your val labels dir'
 is_transform = True
 img_size = 640
 config.core.val_dataset = PseTrainDataset(config, sample_path, label_path, is_transform, img_size)
@@ -78,8 +72,7 @@ config.core.val_loader = torch.utils.data.DataLoader(
 
 
 ## -------------------- test ------------------
-#config.core.model_path = "your test model dir / pretrained weights"
-config.core.model_path = "output/main/model__2021-05-19-17-39__acc_0__epoch_4__step_3__lr_0.000488735805.pth"
+config.core.model_path = "your test model dir / pretrained weights"
 config.core.kernel_num = 7
 config.core.min_kernel_area = 10.0
 config.core.min_area = 300.0
@@ -87,8 +80,7 @@ config.core.min_score = 0.93
 config.core.binary_th = 1.0
 config.core.scale = 1
 
-#sample_path = 'your test image dir'
-sample_path = '/gemfield/hostpv2/lihang/ocr_detect_minidata/minitrain_images/'
+sample_path = 'your test image dir'
 config.core.test_dataset = PseTestDataset(config, sample_path, long_size=1280)
 config.core.test_loader = torch.utils.data.DataLoader(
     dataset = config.core.test_dataset,
