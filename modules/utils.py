@@ -10,35 +10,6 @@ def scale(img, long_size):
     img = cv2.resize(img, dsize=None, fx=scale, fy=scale)
     return img
 
-def preprocess(img, long_size=1920, target=None):
-    img = img[:, :, [2, 1, 0]]
-    scaled_img = scale(img, long_size)
-    scaled_img = Image.fromarray(scaled_img)
-    scaled_img = scaled_img.convert('RGB')
-    scaled_img = transforms.ToTensor()(scaled_img)
-    scaled_img = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(scaled_img)
-    if target==None:
-        return [(torch.from_numpy(img[:, :, [2, 1, 0]]).unsqueeze(0), scaled_img.unsqueeze(0), target)]
-    return img[:, :, [2, 1, 0]], scaled_img, target
-    #return scaled_img, target
-
-def dice_loss(input, target, mask):
-    input = torch.sigmoid(input)
-
-    input = input.contiguous().view(input.size()[0], -1)
-    target = target.contiguous().view(target.size()[0], -1)
-    mask = mask.contiguous().view(mask.size()[0], -1)
-
-    input = input * mask
-    target = target * mask
-
-    a = torch.sum(input * target, 1)
-    b = torch.sum(input * input, 1) + 0.001
-    c = torch.sum(target * target, 1) + 0.001
-    d = (2 * a) / (b + c)
-    dice_loss = torch.mean(d)
-    return 1 - dice_loss
-
 def ohem_single(score, gt_text, training_mask):
     pos_num = (int)(np.sum(gt_text > 0.5)) - (int)(np.sum((gt_text > 0.5) & (training_mask <= 0.5)))
 
@@ -89,3 +60,48 @@ def cal_text_score(texts, gt_texts, training_masks, running_metric_text):
     score_text, _ = running_metric_text.get_scores()
     return score_text
 
+class runningScore(object):
+
+    def __init__(self, n_classes):
+        self.n_classes = n_classes
+        self.confusion_matrix = np.zeros((n_classes, n_classes))
+
+    def _fast_hist(self, label_true, label_pred, n_class):
+        mask = (label_true >= 0) & (label_true < n_class)
+
+        if np.sum((label_pred[mask] < 0)) > 0:
+            print (label_pred[label_pred < 0])
+        hist = np.bincount(
+            n_class * label_true[mask].astype(int) +
+            label_pred[mask], minlength=n_class**2).reshape(n_class, n_class)
+        return hist
+
+    def update(self, label_trues, label_preds):
+        # print label_trues.dtype, label_preds.dtype
+        for lt, lp in zip(label_trues, label_preds):
+            self.confusion_matrix += self._fast_hist(lt.flatten(), lp.flatten(), self.n_classes)
+
+    def get_scores(self):
+        """Returns accuracy score evaluation result.
+            - overall accuracy
+            - mean accuracy
+            - mean IU
+            - fwavacc
+        """
+        hist = self.confusion_matrix
+        acc = np.diag(hist).sum() / (hist.sum() + 0.0001)
+        acc_cls = np.diag(hist) / (hist.sum(axis=1) + 0.0001)
+        acc_cls = np.nanmean(acc_cls)
+        iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist) + 0.0001)
+        mean_iu = np.nanmean(iu)
+        freq = hist.sum(axis=1) / (hist.sum() + 0.0001)
+        fwavacc = (freq[freq > 0] * iu[freq > 0]).sum()
+        cls_iu = dict(zip(range(self.n_classes), iu))
+
+        return {'Overall Acc': acc,
+                'Mean Acc': acc_cls,
+                'FreqW Acc': fwavacc,
+                'Mean IoU': mean_iu,}, cls_iu
+
+    def reset(self):
+        self.confusion_matrix = np.zeros((self.n_classes, self.n_classes))

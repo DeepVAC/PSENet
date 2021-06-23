@@ -10,7 +10,8 @@ import pyclipper
 import Polygon as plg
 import os
 
-from deepvac import OcrDetectAugExecutor
+from deepvac.datasets import OsWalkDataset, DatasetBase
+from deepvac.utils import addUserConfig
 
 random.seed(123456)
 
@@ -144,43 +145,33 @@ def shrink(bboxes, rate, max_shr=20):
     
     return np.array(shrinked_bboxes)
 
-class PseTrainDataset(data.Dataset):
-    def __init__(self, config):
-        self.is_transform = config.is_transform
-        self.aug = OcrDetectAugExecutor(config)
-        
-        self.img_size = config.img_size if (config.img_size is None or isinstance(config.img_size, tuple)) else (config.img_size, config.img_size)
-        self.kernel_num = config.kernel_num
-        self.min_scale = config.min_scale
-
-        data_dirs = [config.data_dir]
-        gt_dirs = [config.gt_dir]
-        
+class PseTrainDataset(DatasetBase):
+    def __init__(self, deepvac_config, sample_path, label_path, is_transform, img_size):
+        super(PseTrainDataset, self).__init__(deepvac_config)
+        self.is_transform = is_transform
+        self.img_size = img_size if (img_size is None or isinstance(img_size, tuple)) else (img_size, img_size)
+        self.kernel_num = addUserConfig("kernel_num", self.config.kernel_num, 7)
+        self.min_scale = addUserConfig("min_scale", self.config.min_scale, 0.4)
+        data_dirs = [sample_path]
+        gt_dirs = [label_path]
         self.img_paths = []
         self.gt_paths = []
 
         for data_dir, gt_dir in zip(data_dirs, gt_dirs):
-            #img_names = util.io.ls(data_dir, '.jpg')
-            #img_names.extend(util.io.ls(data_dir, '.png'))
             img_names = os.listdir(data_dir)
-            # img_names.extend(util.io.ls(data_dir, '.gif'))
 
             img_paths = []
             gt_paths = []
             for idx, img_name in enumerate(img_names):
                 img_path = data_dir + img_name
                 img_paths.append(img_path)
-                
 
-                gt_name = 'gt_' + img_name.split('.')[0] + '.txt'
+                gt_name = 'gt_' + img_name[:-4] + '.txt'
                 gt_path = gt_dir + gt_name
                 gt_paths.append(gt_path)
 
             self.img_paths.extend(img_paths)
             self.gt_paths.extend(gt_paths)
-            
-        # self.img_paths = self.img_paths[440:]
-        # self.gt_paths = self.gt_paths[440:]
 
     def __len__(self):
         return len(self.img_paths)
@@ -199,7 +190,6 @@ class PseTrainDataset(data.Dataset):
         training_mask = np.ones(img.shape[0:2], dtype='uint8')
         if len(bboxes) > 0:
             for i, box in enumerate(bboxes):
-                #bboxes[i] = box*[img.shape[1],img.shape[0]]*(len(box)//2).reshape(len(box)//2, 2)
                 bboxes[i] = np.array(box*([img.shape[1],img.shape[0]]*(len(box)//2))).reshape(len(box)//2, 2).astype('int32')
             for i, box in enumerate(bboxes):
                 cv2.drawContours(gt_text, [box], -1, i + 1, -1)
@@ -216,31 +206,18 @@ class PseTrainDataset(data.Dataset):
             gt_kernals.append(gt_kernal)
 
         if self.is_transform:
-            gts = [gt_text, training_mask]
-            gts.extend(gt_kernals)
-            imgs = [img]
-            imgs.append(gts)
-
-            '''
             imgs = [img, gt_text, training_mask]
             imgs.extend(gt_kernals)
-            '''
 
-            imgs = self.aug(imgs)
-
-            '''
             imgs = random_horizontal_flip(imgs)
             imgs = random_rotate(imgs)
             imgs = random_crop(imgs, self.img_size)
-            '''
 
-            #img, gt_text, training_mask, gt_kernals = imgs[0], imgs[1], imgs[2], imgs[3:]
-            img, gt_text, training_mask, gt_kernals = imgs[0], imgs[1][0], imgs[1][1], imgs[1][2:]
+            img, gt_text, training_mask, gt_kernals = imgs[0], imgs[1], imgs[2], imgs[3:]
         
         gt_text[gt_text > 0] = 1
         gt_kernals = np.array(gt_kernals)
         
-        # '''
         if self.is_transform:
             img = Image.fromarray(img)
             img = img.convert('RGB')
@@ -255,6 +232,31 @@ class PseTrainDataset(data.Dataset):
         gt_text = torch.from_numpy(gt_text).float()
         gt_kernals = torch.from_numpy(gt_kernals).float()
         training_mask = torch.from_numpy(training_mask).float()
-        # '''
 
         return img, [gt_text, gt_kernals, training_mask]
+
+class PseTestDataset(OsWalkDataset):
+    def __init__(self, config, sample_path, long_size):
+        super(PseTestDataset, self).__init__(config, sample_path)
+        self.long_size = long_size
+    
+    def scale(self, img):
+        h, w = img.shape[0:2]
+        scale = self.long_size * 1.0 / max(h, w)
+        h, w = int(h*scale), int(w*scale)
+        h += h%4
+        w += w%4
+        img = cv2.resize(img, (w, h))
+        return img
+
+    def __getitem__(self, idx):
+        img = super(PseTestDataset, self).__getitem__(idx)
+        org_img = img.copy()
+
+        img = img[:, :, [2, 1, 0]]
+        scaled_img = self.scale(img)
+        scaled_img = Image.fromarray(scaled_img)
+        scaled_img = scaled_img.convert('RGB')
+        scaled_img = transforms.ToTensor()(scaled_img)
+        scaled_img = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(scaled_img)
+        return org_img, scaled_img

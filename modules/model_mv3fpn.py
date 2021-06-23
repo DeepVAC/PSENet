@@ -6,8 +6,8 @@ Mobile Networks for Classification, Detection and Segmentation" for more details
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from deepvac.syszux_mobilenet import MobileNetV3, MobileNetV3Large
-from deepvac.syszux_modules import Conv2dBNReLU, Concat
+
+from deepvac.backbones import MobileNetV3, MobileNetV3Large, Conv2dBNReLU, Concat
 
 class Backbone(MobileNetV3Large):
     def __init__(self):
@@ -64,9 +64,9 @@ class FpnMobileNetv3(nn.Module):
         self.out_conv = nn.Conv2d(conv_out, kernel_num, kernel_size=1, stride=1)
         self.cat = Concat()
 
-    def _upsample(self, x, y, scale=1):
+    def _upsample(self, x, y):
         _, _, H, W = y.size()
-        return F.interpolate(x, size=(H // scale, W // scale), mode='bilinear')
+        return F.interpolate(x, size=(H, W), mode='bilinear')
 
     def _upsample_add(self, x, y):
         return F.interpolate(x, size=y.size()[2:], mode='bilinear') + y
@@ -94,7 +94,7 @@ class FpnMobileNetv3(nn.Module):
         out = self.conv(out)
         out = self.out_conv(out)
 
-        out = self._upsample(out, x, scale=1)
+        out = self._upsample(out, x)
         return out
 
 def test():
