@@ -1,16 +1,18 @@
-from deepvac import Deepvac, LOG
-from modules.cpp import pse
-import torch
 import time
-import cv2
 import os
 import numpy as np
+import cv2
 
-class DeepvacPseTest(Deepvac):
+import torch
+
+from deepvac import Deepvac, LOG
+from modules.cpp import pse
+
+class PSENetTest(Deepvac):
     def __init__(self, deepvac_config):
-        super(DeepvacPseTest,self).__init__(deepvac_config)
+        super(PSENetTest,self).__init__(deepvac_config)
 
-    def testFly(self):
+    def doTest(self):
         for idx, (org_img, img) in enumerate(self.config.test_loader):
             LOG.logI('progress: %d / %d'%(idx+1, len(self.config.test_loader)))
             org_img = org_img.numpy().astype('uint8')[0]
@@ -55,11 +57,10 @@ class DeepvacPseTest(Deepvac):
                 x_max, y_max = np.max(crop_box, axis=0)
                 x_min, y_min = np.min(crop_box, axis=0)
                 org_img = cv2.rectangle(org_img, (x_min, y_min), (x_max, y_max), (255,0,0), 2)
-
             cv2.imwrite(os.path.join(self.config.output_dir ,str(idx).zfill(3)+'.jpg'), org_img)
         self.config.sample = img
 
 if __name__ == '__main__':
     from config import config as deepvac_config
-    Pse = DeepvacPseTest(deepvac_config)
+    Pse = PSENetTest(deepvac_config)
     Pse()

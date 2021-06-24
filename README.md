@@ -11,8 +11,8 @@ DeepVAC-compliant PSENet implementation.
 - torchvision >= 0.7.0
 - opencv-python
 - numpy
-- pyclipper
-- Polygon3
+- pyclipper (pip install pyclipper)
+- Polygon3 (pip install Polygon3)
 - pillow
 
 # 如何运行本项目
@@ -40,12 +40,8 @@ DeepVAC-compliant PSENet implementation.
   在config.py文件中作如下配置：
 
 ``` python
-# line 42-43, config for train dataset
-sample_path = <your train image path>
-label_path = <your train gt path>
-# line 60-61, config for val dataset
-sample_path = <your val image path>
-label_path = <your val gt path>
+sample_path = <your train/val/test image path>
+label_path = <your train/val gt path>
 ```
 
 ## 4. 训练相关配置
@@ -53,20 +49,21 @@ label_path = <your val gt path>
 - dataloader相关配置
 
 ```python
-# line 44-57 for train dataset, line 62-71 for val dataset
 is_transform = True                 # 是否动态数据增强
 img_size = 640                      # 输入图片大小(img_size, img_size)
 config.datasets.PseTrainDataset = AttrDict()
 config.datasets.PseTrainDataset.kernel_num = 7
 config.datasets.PseTrainDataset.min_scale = 0.4
-config.core.train_dataset = PseTrainDataset(config, sample_path, label_path, is_transform, img_size)
-config.core.train_loader = torch.utils.data.DataLoader(
-    dataset = config.core.train_dataset,
-    batch_size = 12,
+
+config.core.PSENetTrain.batch_size = 12
+config.core.PSENetTrain.num_workers = 4
+config.core.PSENetTrain.train_dataset = PseTrainDataset(config, sample_path, label_path, is_transform, img_size)
+config.core.PSENetTrain.train_loader = torch.utils.data.DataLoader(
+    dataset = config.core.PSENetTrain.train_dataset,
+    batch_size = config.core.PSENetTrain.batch_size,
     shuffle = True,
-    num_workers = 4,
+    num_workers = config.core.PSENetTrain.num_workers,
     pin_memory = True,
-    sampler = None
 )
 ```
 
@@ -87,19 +84,19 @@ make
 - 测试相关配置
 
 ```python
-# line 75-91
-config.core.model_path = <trained-model-path>
-config.core.kernel_num = 7
-config.core.min_kernel_area = 10.0
-config.core.min_area = 300.0
-config.core.min_score = 0.93
-config.core.binary_th = 1.0
-config.core.scale = 1
+config.core.PSENetTest = config.core.PSENetTrain.clone()
+config.core.PSENetTest.model_path = "your test model dir / pretrained weights"
+config.core.PSENetTest.kernel_num = 7
+config.core.PSENetTest.min_kernel_area = 10.0
+config.core.PSENetTest.min_area = 300.0
+config.core.PSENetTest.min_score = 0.93
+config.core.PSENetTest.binary_th = 1.0
+config.core.PSENetTest.scale = 1
 
-sample_path = <your test images path>
-config.core.test_dataset = PseTestDataset(config, sample_path, long_size=1280)
-config.core.test_loader = torch.utils.data.DataLoader(
-    dataset = config.core.test_dataset,
+sample_path = 'your test image dir'
+config.core.PSENetTest.test_dataset = PseTestDataset(config, sample_path, long_size=1280)
+config.core.PSENetTest.test_loader = torch.utils.data.DataLoader(
+    dataset = config.core.PSENetTest.test_dataset,
     batch_size = 1,
     shuffle = False,
     num_workers = 0,
@@ -126,7 +123,8 @@ config.cast.script_model_path = "output/script.pt"
 - 加载torchscript模型
 
 ```python
-config.core.jit_model_path = <torchscript-model-path>
+config.core.PSENetTrain.jit_model_path = <torchscript-model-path>
+config.core.PSENetTest.jit_model_path = <torchscript-model-path>
 ```
 
 ## 更多功能
