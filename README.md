@@ -11,8 +11,8 @@ DeepVAC-compliant PSENet implementation.
 - torchvision >= 0.7.0
 - opencv-python
 - numpy
-- pyclipper
-- Polygon3
+- pyclipper (pip install pyclipper)
+- Polygon3 (pip install Polygon3)
 - pillow
 
 # 如何运行本项目
