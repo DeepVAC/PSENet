@@ -40,12 +40,8 @@ DeepVAC-compliant PSENet implementation.
   在config.py文件中作如下配置：
 
 ``` python
-# line 43-44, config for train dataset
-sample_path = <your train image path>
-label_path = <your train gt path>
-# line 66-67, config for val dataset
-sample_path = <your val image path>
-label_path = <your val gt path>
+sample_path = <your train/val/test image path>
+label_path = <your train/val gt path>
 ```
 
 ## 4. 训练相关配置
@@ -53,7 +49,6 @@ label_path = <your val gt path>
 - dataloader相关配置
 
 ```python
-# line 45-59 for train dataset, line 68-77 for val dataset
 is_transform = True                 # 是否动态数据增强
 img_size = 640                      # 输入图片大小(img_size, img_size)
 config.datasets.PseTrainDataset = AttrDict()
@@ -89,7 +84,6 @@ make
 - 测试相关配置
 
 ```python
-# line 80-97
 config.core.PSENetTest = config.core.PSENetTrain.clone()
 config.core.PSENetTest.model_path = "your test model dir / pretrained weights"
 config.core.PSENetTest.kernel_num = 7
